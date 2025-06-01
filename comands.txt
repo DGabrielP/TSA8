@@ -1,0 +1,422 @@
+
+##Contenido de .env
+
+# Etapa 1: construir el .jar
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
+
+# Etapa 2: imagen final
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+##Contenido de Dockerfile
+
+# Etapa 1: construir el .jar
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
+
+# Etapa 2: imagen final
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+##docker-compose.yml 
+
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring_backend
+    ports:
+      - "${BACKEND_PORT}:8080"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
+
+## Consola de linux
+
+diego@diego-Inspiron-3543:~$ ls
+Arduino  DataGripProjects  Desktop  Documents  Downloads  mockAPI  Music  Pictures  Proyectos  Public  snap  suda-frontend-s6  Templates  Videos
+diego@diego-Inspiron-3543:~$ git clone https://github.com/maguaman2/tendencias-mar22-security.git
+cd tendencias-mar22-security
+Cloning into 'tendencias-mar22-security'...
+remote: Enumerating objects: 75, done.
+remote: Counting objects: 100% (75/75), done.
+remote: Compressing objects: 100% (40/40), done.
+remote: Total 75 (delta 11), reused 72 (delta 8), pack-reused 0 (from 0)
+Receiving objects: 100% (75/75), 64.46 KiB | 611.00 KiB/s, done.
+Resolving deltas: 100% (11/11), done.
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano .env
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano docker-compose.yml
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ code .
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano Dockerfile
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ tree
+Command 'tree' not found, but can be installed with:
+sudo snap install tree  # version 2.1.3+pkg-5852, or
+sudo apt  install tree  # version 2.1.1-2
+See 'snap info tree' for additional versions.
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ sudo apt  install tree 
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following packages were automatically installed and are no longer required:
+  bridge-utils linux-headers-6.8.0-51 linux-headers-6.8.0-51-generic linux-image-6.8.0-51-generic linux-modules-6.8.0-51-generic linux-modules-extra-6.8.0-51-generic
+  linux-tools-6.8.0-51 linux-tools-6.8.0-51-generic ubuntu-fan
+Use 'sudo apt autoremove' to remove them.
+The following NEW packages will be installed:
+  tree
+0 upgraded, 1 newly installed, 0 to remove and 57 not upgraded.
+Need to get 47,1 kB of archives.
+After this operation, 111 kB of additional disk space will be used.
+Get:1 http://ftp.usf.edu/pub/ubuntu noble/universe amd64 tree amd64 2.1.1-2ubuntu3 [47,1 kB]
+Fetched 47,1 kB in 1s (81,3 kB/s)
+Selecting previously unselected package tree.
+(Reading database ... 594133 files and directories currently installed.)
+Preparing to unpack .../tree_2.1.1-2ubuntu3_amd64.deb ...
+Unpacking tree (2.1.1-2ubuntu3) ...
+Setting up tree (2.1.1-2ubuntu3) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ tree
+.
+├── docker-compose.yml
+├── Dockerfile
+├── mvnw
+├── mvnw.cmd
+├── pom.xml
+├── README.md
+└── src
+    ├── main
+    │   ├── kotlin
+    │   │   └── com
+    │   │       └── empresa
+    │   │           └── security
+    │   │               ├── config
+    │   │               │   └── CorsConfig.kt
+    │   │               ├── controller
+    │   │               │   └── UserController.kt
+    │   │               ├── model
+    │   │               │   └── User.kt
+    │   │               ├── repository
+    │   │               │   └── UserRepository.kt
+    │   │               ├── SecurityApplication.kt
+    │   │               └── service
+    │   │                   └── UserService.kt
+    │   └── resources
+    │       ├── application.yml
+    │       └── db
+    │           └── migration
+    │               └── V1__init.sql
+    └── test
+        └── kotlin
+            └── com
+                └── empresa
+                    └── security
+                        └── SecurityApplicationTests.kt
+
+20 directories, 15 files
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker compose -f docker-compose.yml up --build -d
+WARN[0000] /home/diego/tendencias-mar22-security/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+Compose can now delegate builds to bake for better performance.
+ To do so, set COMPOSE_BAKE=true.
+[+] Building 102.9s (15/15) FINISHED                                                                                                                      docker:default
+ => [backend internal] load build definition from Dockerfile                                                                                                        0.0s
+ => => transferring dockerfile: 362B                                                                                                                                0.0s
+ => [backend internal] load metadata for docker.io/library/eclipse-temurin:17-jdk-alpine                                                                            1.0s
+ => [backend internal] load metadata for docker.io/library/maven:3.8.6-eclipse-temurin-17                                                                           1.8s
+ => [backend internal] load .dockerignore                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                     0.0s
+ => [backend build 1/5] FROM docker.io/library/maven:3.8.6-eclipse-temurin-17@sha256:5092873778f0495464c1151df8f5c2e01a09ba37d931be719cbc1fc0f4559a07              31.3s
+ => => resolve docker.io/library/maven:3.8.6-eclipse-temurin-17@sha256:5092873778f0495464c1151df8f5c2e01a09ba37d931be719cbc1fc0f4559a07                             0.0s
+ => => sha256:5092873778f0495464c1151df8f5c2e01a09ba37d931be719cbc1fc0f4559a07 1.21kB / 1.21kB                                                                      0.0s
+ => => sha256:d9035c93956cda1f067a6fe5d120c6c3575830dd651802e72c8e9376b78563b9 2.00kB / 2.00kB                                                                      0.0s
+ => => sha256:0f909120a5780e04d8cb0aa2f4bd04de2579ff60528719ffb09e3611423534fb 8.48kB / 8.48kB                                                                      0.0s
+ => => sha256:6e3729cf69e0ce2de9e779575a1fec8b7fb5efdfa822829290ab6d5d1bc3e797 30.43MB / 30.43MB                                                                   10.2s
+ => => sha256:4d8d923227d8dc300e1ddab1b65c83c0eff7f4a7105d958420872f7138b79735 16.97MB / 16.97MB                                                                    7.4s
+ => => sha256:eda8241fd25fe52c584da502f21cef5b5067551f7bcfcca58e9a630238f7f558 192.44MB / 192.44MB                                                                 24.3s
+ => => sha256:35dccabde73de58115ed8db691bd335b82d91b6961c0d1af77691b368b0a8253 175B / 175B                                                                          7.7s
+ => => sha256:d7207820eacfa26927d03b44854489e8e2a9052aacb83a3bd19d6ab059e3dbad 21.82MB / 21.82MB                                                                   15.3s
+ => => extracting sha256:6e3729cf69e0ce2de9e779575a1fec8b7fb5efdfa822829290ab6d5d1bc3e797                                                                           1.9s
+ => => sha256:ed84b45b63bdf4e0e24ee349ecca664d2b61ef0c1a6812b7a7dab051475eff6a 8.74MB / 8.74MB                                                                     11.8s
+ => => sha256:4097965eadc4b93852c18df33b24f9917da48c19b9ebd19498e69c6b5af7cf6e 852B / 852B                                                                         12.1s
+ => => sha256:d713a6b46ea0e75b76bbc3073acbf8c82526abdc3f09109a56423220742681e9 361B / 361B                                                                         12.4s
+ => => extracting sha256:4d8d923227d8dc300e1ddab1b65c83c0eff7f4a7105d958420872f7138b79735                                                                           1.6s
+ => => extracting sha256:eda8241fd25fe52c584da502f21cef5b5067551f7bcfcca58e9a630238f7f558                                                                           4.5s
+ => => extracting sha256:35dccabde73de58115ed8db691bd335b82d91b6961c0d1af77691b368b0a8253                                                                           0.0s
+ => => extracting sha256:d7207820eacfa26927d03b44854489e8e2a9052aacb83a3bd19d6ab059e3dbad                                                                           1.6s
+ => => extracting sha256:ed84b45b63bdf4e0e24ee349ecca664d2b61ef0c1a6812b7a7dab051475eff6a                                                                           0.2s
+ => => extracting sha256:4097965eadc4b93852c18df33b24f9917da48c19b9ebd19498e69c6b5af7cf6e                                                                           0.0s
+ => => extracting sha256:d713a6b46ea0e75b76bbc3073acbf8c82526abdc3f09109a56423220742681e9                                                                           0.0s
+ => [backend internal] load build context                                                                                                                           0.0s
+ => => transferring context: 10.13kB                                                                                                                                0.0s
+ => [backend stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jdk-alpine@sha256:ca5c0c9763d21cf1617cb68ef8c17228a202cd0358fa6d7510a1bbdbd49c74da              0.0s
+ => CACHED [backend stage-1 2/3] WORKDIR /app                                                                                                                       0.0s
+ => [backend build 2/5] WORKDIR /app                                                                                                                                0.8s
+ => [backend build 3/5] COPY pom.xml .                                                                                                                              0.1s
+ => [backend build 4/5] COPY src ./src                                                                                                                              0.1s
+ => [backend build 5/5] RUN mvn clean package -DskipTests                                                                                                          67.3s
+ => [backend stage-1 3/3] COPY --from=build /app/target/security-0.0.1-SNAPSHOT.jar ./app.jar                                                                       0.2s 
+ => [backend] exporting to image                                                                                                                                    0.7s 
+ => => exporting layers                                                                                                                                             0.7s
+ => => writing image sha256:edd7c6c0455771b9da9715c5d793fa0e4466940aee5ac4b6352556a9ed5a46c4                                                                        0.0s
+ => => naming to docker.io/library/tendencias-mar22-security-backend                                                                                                0.0s
+ => [backend] resolving provenance for metadata file                                                                                                                0.0s
+[+] Running 6/7
+ ✔ backend                                            Built                                                                                                         0.0s 
+ ✔ Network tendencias-mar22-security_backend-network  Created                                                                                                       0.1s 
+ ✔ Volume "tendencias-mar22-security_pgdata"          Created                                                                                                       0.0s 
+ ✔ Volume "tendencias-mar22-security_pgadmin-data"    Created                                                                                                       0.0s 
+ ✔ Container pgadmin                                  Started                                                                                                       0.6s 
+ ✔ Container postgresdb                               Started                                                                                                       0.7s 
+ ⠦ Container securitybe                               Starting                                                                                                      1.0s 
+Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint securitybe (940adcb0af2be578aac0ec7cb5bbeff59aa8e98c07157ade69f78cd1606a0b44): Bind for 0.0.0.0:8081 failed: port is already allocated
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ sudo lsof -i :8081
+COMMAND    PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+docker-pr 5640 root    7u  IPv4  35846      0t0  TCP *:tproxy (LISTEN)
+docker-pr 5646 root    7u  IPv6  35847      0t0  TCP *:tproxy (LISTEN)
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps
+CONTAINER ID   IMAGE                   COMMAND                  CREATED         STATUS             PORTS                                              NAMES
+d82f5d4d2bea   postgres:15             "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes       0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4          "/entrypoint.sh"         2 minutes ago   Up 2 minutes       443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+b64b378b90f7   phpmyadmin/phpmyadmin   "/docker-entrypoint.…"   3 weeks ago     Up About an hour   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp            gabo_phpmyadmin
+2d50ab936890   mysql:8.0               "docker-entrypoint.s…"   3 weeks ago     Up About an hour   3306/tcp, 33060/tcp                                gabo_mysql
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker stop 2d50ab936890 
+2d50ab936890
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ b64b378b90f7 
+b64b378b90f7: command not found
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker stop b64b378b90f7 
+b64b378b90f7
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS         PORTS                                              NAMES
+d82f5d4d2bea   postgres:15      "docker-entrypoint.s…"   3 minutes ago   Up 3 minutes   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4   "/entrypoint.sh"         3 minutes ago   Up 3 minutes   443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker compose -f docker-compose.yml up --build -d
+WARN[0000] /home/diego/tendencias-mar22-security/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+Compose can now delegate builds to bake for better performance.
+ To do so, set COMPOSE_BAKE=true.
+[+] Building 1.2s (15/15) FINISHED                                                                                                                        docker:default
+ => [backend internal] load build definition from Dockerfile                                                                                                        0.0s
+ => => transferring dockerfile: 362B                                                                                                                                0.0s
+ => [backend internal] load metadata for docker.io/library/eclipse-temurin:17-jdk-alpine                                                                            1.1s
+ => [backend internal] load metadata for docker.io/library/maven:3.8.6-eclipse-temurin-17                                                                           1.1s
+ => [backend internal] load .dockerignore                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                     0.0s
+ => [backend build 1/5] FROM docker.io/library/maven:3.8.6-eclipse-temurin-17@sha256:5092873778f0495464c1151df8f5c2e01a09ba37d931be719cbc1fc0f4559a07               0.0s
+ => [backend internal] load build context                                                                                                                           0.0s
+ => => transferring context: 1.59kB                                                                                                                                 0.0s
+ => [backend stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jdk-alpine@sha256:ca5c0c9763d21cf1617cb68ef8c17228a202cd0358fa6d7510a1bbdbd49c74da              0.0s
+ => CACHED [backend stage-1 2/3] WORKDIR /app                                                                                                                       0.0s
+ => CACHED [backend build 2/5] WORKDIR /app                                                                                                                         0.0s
+ => CACHED [backend build 3/5] COPY pom.xml .                                                                                                                       0.0s
+ => CACHED [backend build 4/5] COPY src ./src                                                                                                                       0.0s
+ => CACHED [backend build 5/5] RUN mvn clean package -DskipTests                                                                                                    0.0s
+ => CACHED [backend stage-1 3/3] COPY --from=build /app/target/security-0.0.1-SNAPSHOT.jar ./app.jar                                                                0.0s
+ => [backend] exporting to image                                                                                                                                    0.0s
+ => => exporting layers                                                                                                                                             0.0s
+ => => writing image sha256:edd7c6c0455771b9da9715c5d793fa0e4466940aee5ac4b6352556a9ed5a46c4                                                                        0.0s
+ => => naming to docker.io/library/tendencias-mar22-security-backend                                                                                                0.0s
+ => [backend] resolving provenance for metadata file                                                                                                                0.0s
+[+] Running 4/4
+ ✔ backend               Built                                                                                                                                      0.0s 
+ ✔ Container postgresdb  Running                                                                                                                                    0.0s 
+ ✔ Container pgadmin     Running                                                                                                                                    0.0s 
+ ✔ Container securitybe  Started                                                                                                                                    0.3s 
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS         PORTS                                              NAMES
+d82f5d4d2bea   postgres:15      "docker-entrypoint.s…"   5 minutes ago   Up 5 minutes   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4   "/entrypoint.sh"         5 minutes ago   Up 5 minutes   443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ sudo l soft -i: 8081
+sudo: l: command not found
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ sudo lsof -i :8081
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker compose -f docker-compose.yml up --build -d
+WARN[0000] /home/diego/tendencias-mar22-security/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+Compose can now delegate builds to bake for better performance.
+ To do so, set COMPOSE_BAKE=true.
+[+] Building 1.3s (15/15) FINISHED                                                                                                                        docker:default
+ => [backend internal] load build definition from Dockerfile                                                                                                        0.0s
+ => => transferring dockerfile: 362B                                                                                                                                0.0s
+ => [backend internal] load metadata for docker.io/library/eclipse-temurin:17-jdk-alpine                                                                            1.0s
+ => [backend internal] load metadata for docker.io/library/maven:3.8.6-eclipse-temurin-17                                                                           1.1s
+ => [backend internal] load .dockerignore                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                     0.0s
+ => [backend build 1/5] FROM docker.io/library/maven:3.8.6-eclipse-temurin-17@sha256:5092873778f0495464c1151df8f5c2e01a09ba37d931be719cbc1fc0f4559a07               0.0s
+ => [backend stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jdk-alpine@sha256:ca5c0c9763d21cf1617cb68ef8c17228a202cd0358fa6d7510a1bbdbd49c74da              0.0s
+ => [backend internal] load build context                                                                                                                           0.0s
+ => => transferring context: 1.59kB                                                                                                                                 0.0s
+ => CACHED [backend stage-1 2/3] WORKDIR /app                                                                                                                       0.0s
+ => CACHED [backend build 2/5] WORKDIR /app                                                                                                                         0.0s
+ => CACHED [backend build 3/5] COPY pom.xml .                                                                                                                       0.0s
+ => CACHED [backend build 4/5] COPY src ./src                                                                                                                       0.0s
+ => CACHED [backend build 5/5] RUN mvn clean package -DskipTests                                                                                                    0.0s
+ => CACHED [backend stage-1 3/3] COPY --from=build /app/target/security-0.0.1-SNAPSHOT.jar ./app.jar                                                                0.0s
+ => [backend] exporting to image                                                                                                                                    0.0s
+ => => exporting layers                                                                                                                                             0.0s
+ => => writing image sha256:edd7c6c0455771b9da9715c5d793fa0e4466940aee5ac4b6352556a9ed5a46c4                                                                        0.0s
+ => => naming to docker.io/library/tendencias-mar22-security-backend                                                                                                0.0s
+ => [backend] resolving provenance for metadata file                                                                                                                0.0s
+[+] Running 4/4
+ ✔ backend               Built                                                                                                                                      0.0s 
+ ✔ Container pgadmin     Running                                                                                                                                    0.0s 
+ ✔ Container postgresdb  Running                                                                                                                                    0.0s 
+ ✔ Container securitybe  Started                                                                                                                                    0.3s 
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                                              NAMES
+d82f5d4d2bea   postgres:15      "docker-entrypoint.s…"   10 minutes ago   Up 10 minutes   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4   "/entrypoint.sh"         10 minutes ago   Up 10 minutes   443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps -a
+CONTAINER ID   IMAGE                               COMMAND                  CREATED          STATUS                          PORTS                                              NAMES
+308170ecf2fb   tendencias-mar22-security-backend   "java -jar app.jar"      11 minutes ago   Exited (1) About a minute ago                                                      securitybe
+d82f5d4d2bea   postgres:15                         "docker-entrypoint.s…"   11 minutes ago   Up 11 minutes                   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4                      "/entrypoint.sh"         11 minutes ago   Up 11 minutes                   443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+b64b378b90f7   phpmyadmin/phpmyadmin               "/docker-entrypoint.…"   3 weeks ago      Exited (0) 8 minutes ago                                                           gabo_phpmyadmin
+2d50ab936890   mysql:8.0                           "docker-entrypoint.s…"   3 weeks ago      Exited (0) 8 minutes ago                                                           gabo_mysql
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker logs securitybe
+Exception in thread "main" java.lang.UnsupportedClassVersionError: com/empresa/security/SecurityApplicationKt has been compiled by a more recent version of the Java Runtime (class file version 65.0), this version of the Java Runtime only recognizes class file versions up to 61.0
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1017)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:150)
+	at java.base/java.net.URLClassLoader.defineClass(URLClassLoader.java:524)
+	at java.base/java.net.URLClassLoader$1.run(URLClassLoader.java:427)
+	at java.base/java.net.URLClassLoader$1.run(URLClassLoader.java:421)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:712)
+	at java.base/java.net.URLClassLoader.findClass(URLClassLoader.java:420)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:592)
+	at org.springframework.boot.loader.net.protocol.jar.JarUrlClassLoader.loadClass(JarUrlClassLoader.java:107)
+	at org.springframework.boot.loader.launch.LaunchedClassLoader.loadClass(LaunchedClassLoader.java:91)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+	at java.base/java.lang.Class.forName0(Native Method)
+	at java.base/java.lang.Class.forName(Class.java:467)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:99)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:64)
+	at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:40)
+Exception in thread "main" java.lang.UnsupportedClassVersionError: com/empresa/security/SecurityApplicationKt has been compiled by a more recent version of the Java Runtime (class file version 65.0), this version of the Java Runtime only recognizes class file versions up to 61.0
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1017)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:150)
+	at java.base/java.net.URLClassLoader.defineClass(URLClassLoader.java:524)
+	at java.base/java.net.URLClassLoader$1.run(URLClassLoader.java:427)
+	at java.base/java.net.URLClassLoader$1.run(URLClassLoader.java:421)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:712)
+	at java.base/java.net.URLClassLoader.findClass(URLClassLoader.java:420)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:592)
+	at org.springframework.boot.loader.net.protocol.jar.JarUrlClassLoader.loadClass(JarUrlClassLoader.java:107)
+	at org.springframework.boot.loader.launch.LaunchedClassLoader.loadClass(LaunchedClassLoader.java:91)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+	at java.base/java.lang.Class.forName0(Native Method)
+	at java.base/java.lang.Class.forName(Class.java:467)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:99)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:64)
+	at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:40)
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano Dockerfile 
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker compose -f docker-compose.yml up --build -d
+WARN[0000] /home/diego/tendencias-mar22-security/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+Compose can now delegate builds to bake for better performance.
+ To do so, set COMPOSE_BAKE=true.
+[+] Building 1.9s (15/15) FINISHED                                                                                                                        docker:default
+ => [backend internal] load build definition from Dockerfile                                                                                                        0.0s
+ => => transferring dockerfile: 362B                                                                                                                                0.0s
+ => [backend internal] load metadata for docker.io/library/eclipse-temurin:21-jdk-alpine                                                                            0.4s
+ => [backend internal] load metadata for docker.io/library/maven:3.8.6-eclipse-temurin-17                                                                           0.4s
+ => [backend internal] load .dockerignore                                                                                                                           0.0s
+ => => transferring context: 2B                                                                                                                                     0.0s
+ => [backend stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jdk-alpine@sha256:2f2f553ce09d25e2d2f0f521ab94cd73f70c9b21327a29149c23a2b63b8e29a0              0.0s
+ => [backend build 1/5] FROM docker.io/library/maven:3.8.6-eclipse-temurin-17@sha256:5092873778f0495464c1151df8f5c2e01a09ba37d931be719cbc1fc0f4559a07               0.0s
+ => [backend internal] load build context                                                                                                                           0.0s
+ => => transferring context: 1.59kB                                                                                                                                 0.0s
+ => CACHED [backend stage-1 2/3] WORKDIR /app                                                                                                                       0.0s
+ => CACHED [backend build 2/5] WORKDIR /app                                                                                                                         0.0s
+ => CACHED [backend build 3/5] COPY pom.xml .                                                                                                                       0.0s
+ => CACHED [backend build 4/5] COPY src ./src                                                                                                                       0.0s
+ => CACHED [backend build 5/5] RUN mvn clean package -DskipTests                                                                                                    0.0s
+ => [backend stage-1 3/3] COPY --from=build /app/target/security-0.0.1-SNAPSHOT.jar ./app.jar                                                                       0.4s
+ => [backend] exporting to image                                                                                                                                    0.9s
+ => => exporting layers                                                                                                                                             0.9s
+ => => writing image sha256:dae1867831ca6b0afd65c4e632b98a67e8fdf1f9272504617b142ca9f37c0bb5                                                                        0.0s
+ => => naming to docker.io/library/tendencias-mar22-security-backend                                                                                                0.0s
+ => [backend] resolving provenance for metadata file                                                                                                                0.0s
+[+] Running 4/4
+ ✔ backend               Built                                                                                                                                      0.0s 
+ ✔ Container pgadmin     Running                                                                                                                                    0.0s 
+ ✔ Container postgresdb  Running                                                                                                                                    0.0s 
+ ✔ Container securitybe  Started                                                                                                                                    0.4s 
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps 
+CONTAINER ID   IMAGE                               COMMAND                  CREATED          STATUS          PORTS                                              NAMES
+cec2cca75fe4   tendencias-mar22-security-backend   "java -jar app.jar"      8 seconds ago    Up 7 seconds    0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp        securitybe
+d82f5d4d2bea   postgres:15                         "docker-entrypoint.s…"   13 minutes ago   Up 13 minutes   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4                      "/entrypoint.sh"         13 minutes ago   Up 13 minutes   443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano .env
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano .env
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker exec -it pgadmin env | grep PGADMIN
+PGADMIN_DEFAULT_PASSWORD=admin
+PGADMIN_DEFAULT_EMAIL=admin@admin.com
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker ps
+CONTAINER ID   IMAGE                               COMMAND                  CREATED          STATUS          PORTS                                              NAMES
+cec2cca75fe4   tendencias-mar22-security-backend   "java -jar app.jar"      28 minutes ago   Up 28 minutes   0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp        securitybe
+d82f5d4d2bea   postgres:15                         "docker-entrypoint.s…"   41 minutes ago   Up 41 minutes   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp        postgresdb
+38f12bfac371   dpage/pgadmin4                      "/entrypoint.sh"         41 minutes ago   Up 41 minutes   443/tcp, 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   pgadmin
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ docker exec -it postgresdb psql -U postgres -d db_security
+psql (15.13 (Debian 15.13-1.pgdg120+1))
+Type "help" for help.
+
+db_security=# exit
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ ss -tuln | grep 5432
+tcp   LISTEN 0      4096         0.0.0.0:5432       0.0.0.0:*          
+tcp   LISTEN 0      4096            [::]:5432          [::]:*          
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ nano .env
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ ^C
+diego@diego-Inspiron-3543:~/tendencias-mar22-security$ 
+
+
+
